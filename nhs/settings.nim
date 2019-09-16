@@ -23,5 +23,4 @@ const
     sleep_on_no_send= 100
     max_upload_speed= 1024 * 1024 * 4
     
-    max_read_from_disk_chunk= 1024 * 1024
-    #max_read_from_disk_speed= 1024 * 1024
+    max_read_from_disk_speed= 1024 * 1024

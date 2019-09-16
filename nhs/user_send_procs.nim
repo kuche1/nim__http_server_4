@@ -41,19 +41,28 @@ proc raw_send_str(s:var User, text:string):bool=
             return true
         ind.inc max_upload_chunk
 
+
 proc raw_send_file(s:var User, dir:string):bool=
-    var to_send= newString(max_read_from_disk_chunk)
     let f= open dir
     while true:
-        let red_amount= f.readChars(to_send, 0, max_read_from_disk_chunk)
+        let now= epoch_time()
+        let time_left= s.next_read_from_disk - now
+        if time_left > 0:
+            sleep int(time_left*1000)
+            s.next_read_from_disk= now + time_left + 1
+        else:
+            s.next_read_from_disk= now + 1
+            
+        let buffer= int(max_read_from_disk_speed / working_threads)
+        var to_be_sent= newString(buffer)
+        let red_amount= f.readChars(to_be_sent, 0, buffer)
         if red_amount == 0:
             close f
             return
-        if red_amount < max_read_from_disk_chunk:
+        elif red_amount < buffer:
             close f
-            return s.raw_send_str to_send[0 ..< red_amount]
-            
-        if s.raw_send_str(to_send):
+            return s.raw_send_str to_be_sent[0 ..< red_amount]
+        elif s.raw_send_str to_be_sent:
             close f
             return true
 
@@ -75,7 +84,6 @@ proc finish(s:var User):bool=
     let now= epoch_time()
     s.upload_start= now
     s.all_upload_start= now
-    s.read_from_disk_start= now
     result= s.raw_send_str s.http_header
     s.http_header= ""
    
