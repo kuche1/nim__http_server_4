@@ -14,44 +14,43 @@ proc raw_raw_send_str(s:var User, text:string):bool=
                     echo "TOO SLOW DOWNLOAD: ", s.ip
                     return true
             sleep sleep_on_no_send
-    s.uploaded.inc text.len
     s.all_uploaded_bytes.inc text.len
-    while true:
-        if not working:
-            return true
-        let max_upload= int( max_upload_speed / working_threads )
-        if s.uploaded >= max_upload:
-            let waited= epoch_time() - s.upload_start
-            if waited < 1:
-                sleep 1000
-            s.upload_start= epoch_time()
-            s.uploaded.dec max_upload
-        else:
-            break
-            
+  
+# da polzvam unsafeAddr za access do socket-a
 proc raw_send_str(s:var User, text:string):bool=
-    var ind= 0
-    while true:
-        let remains= text.len - ind
-        if remains == 0:
+    var start= 0
+    while working:
+        let now= epoch_time()
+        let time_left= s.next_upload - now
+        if time_left > 0:
+            sleep int(time_left*1000)
+            s.next_upload= now + time_left
+        else:
+            s.next_upload= now
+            
+        let buffer= int(max_upload_speed / working_threads)
+        let end_at= start + buffer
+        if end_at > text.len:
+            if s.raw_raw_send_str(text[start ..< ^1]):
+                return true
+            s.next_upload += ((text.len-start) / buffer)
             return
-        if remains < max_upload_chunk:
-            return s.raw_raw_send_str text[ind .. ^1]
-        if s.raw_raw_send_str(text[ind ..< (ind+max_upload_chunk)]):
-            return true
-        ind.inc max_upload_chunk
-
+        else:
+            if s.raw_raw_send_str(text[start ..< end_at]):
+                return true
+            s.next_upload += 1
+    return true
 
 proc raw_send_file(s:var User, dir:string):bool=
     let f= open dir
-    while true:
+    while working:
         let now= epoch_time()
         let time_left= s.next_read_from_disk - now
         if time_left > 0:
             sleep int(time_left*1000)
-            s.next_read_from_disk= now + time_left + 1
+            s.next_read_from_disk= now + time_left
         else:
-            s.next_read_from_disk= now + 1
+            s.next_read_from_disk= now
             
         let buffer= int(max_read_from_disk_speed / working_threads)
         var to_be_sent= newString(buffer)
@@ -60,11 +59,14 @@ proc raw_send_file(s:var User, dir:string):bool=
             close f
             return
         elif red_amount < buffer:
+            s.next_read_from_disk += red_amount / buffer
             close f
             return s.raw_send_str to_be_sent[0 ..< red_amount]
         elif s.raw_send_str to_be_sent:
             close f
             return true
+        s.next_read_from_disk += 1
+    return true
 
 
 # http lower
@@ -82,7 +84,6 @@ proc http_end(s:var User)=
 proc finish(s:var User):bool=
     s.http_end()
     let now= epoch_time()
-    s.upload_start= now
     s.all_upload_start= now
     result= s.raw_send_str s.http_header
     s.http_header= ""

@@ -6,10 +6,8 @@ type User* =object
     download_start:float
     downloaded:int
     http_header:string
-    #last_red_from_disk:float
     next_read_from_disk:float
-    upload_start:float
-    uploaded:int
+    next_upload:float
     
     ip:string
     meth:string
