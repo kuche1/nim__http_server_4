@@ -7,14 +7,14 @@ proc raw_raw_send_str(s:var User, text:string):bool=
             s.con.send(text)
             break
         except OSError:
-            let time_passed= (epoch_time() - s.all_upload_start)
+            let time_passed= (epoch_time() - s.upload_started)
             if time_passed > no_min_upload_scan_before:
-                let upload_speed= s.all_uploaded_bytes div int(time_passed)
+                let upload_speed= s.uploaded_bytes div int(time_passed)
                 if upload_speed < min_upload_speed:
                     echo "TOO SLOW DOWNLOAD: ", s.ip
                     return true
             sleep sleep_on_no_send
-    s.all_uploaded_bytes.inc text.len
+    s.uploaded_bytes.inc text.len
   
 # da polzvam unsafeAddr za access do socket-a
 proc raw_send_str(s:var User, text:string):bool=
@@ -83,8 +83,7 @@ proc http_end(s:var User)=
     
 proc finish(s:var User):bool=
     s.http_end()
-    let now= epoch_time()
-    s.all_upload_start= now
+    s.upload_started= epoch_time()
     result= s.raw_send_str s.http_header
     s.http_header= ""
    

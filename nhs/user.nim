@@ -1,13 +1,13 @@
 
 type User* =object
-    all_uploaded_bytes:int64
-    all_upload_start:float
     con:Socket
     download_start:float
     downloaded:int
     http_header:string
     next_read_from_disk:float
     next_upload:float
+    uploaded_bytes:int64
+    upload_started:float
     
     ip:string
     meth:string
