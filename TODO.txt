@@ -1,2 +1,3 @@
-disk read / threads
 check if user has disconencted and stop upload if so
+
+da polzvam unsafeAddr za access do socket-a

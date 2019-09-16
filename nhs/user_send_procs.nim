@@ -16,7 +16,6 @@ proc raw_raw_send_str(s:var User, text:string):bool=
             sleep sleep_on_no_send
     s.uploaded_bytes.inc text.len
   
-# da polzvam unsafeAddr za access do socket-a
 proc raw_send_str(s:var User, text:string):bool=
     var start= 0
     while working:

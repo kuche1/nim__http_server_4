@@ -16,7 +16,6 @@ on_connect proc(u:var User)=
 
     assure u.recive_body()
     
-    #if u.send_file("text/plain", "responses/text_response.txt"):
     if u.send_download("dream corp llc s2 e12.mp4", "responses/s2e12.mp4"):
         echo "file not sent"
     else:
