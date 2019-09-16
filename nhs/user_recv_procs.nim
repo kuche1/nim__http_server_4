@@ -14,10 +14,10 @@ proc recv(s:var User, size:int, timeout:int):(bool,string)=
     while true:
         let max_download= int( max_download_speed / working_threads )
         if s.downloaded >= max_download:
-            let waited= epoch_time() - s.download_start
+            let waited= epoch_time() - s.download_started
             if waited < 1:
                 sleep 1000
-            s.download_start= epoch_time()
+            s.download_started= epoch_time()
             s.downloaded.dec max_download
         else:
             break

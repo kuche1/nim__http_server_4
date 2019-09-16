@@ -3,6 +3,18 @@
 
 proc raw_raw_send_str(s:var User, text:string):bool=
     while true:
+        var bit= newString 1
+        try:
+            let recived= s.con.recv(bit, 1, 1)
+            case recived
+            of -1, 0:
+                return true
+            else:
+                echo "UNEXPECTED DATA RECIVED: ", recived
+                quit(1)
+        except TimeoutError:
+            discard
+        
         try:
             s.con.send(text)
             break

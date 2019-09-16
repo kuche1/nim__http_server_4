@@ -1,3 +1,6 @@
-check if user has disconencted and stop upload if so
 
 da polzvam unsafeAddr za access do socket-a
+
+change download speed delay method
+
+use better way to determine if connection was closed
